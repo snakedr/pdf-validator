@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Processor Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-envelope-check"></i> Email Processor
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text" id="connection-status">
+                    <i class="bi bi-circle-fill text-warning"></i> Подключение...
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Статистика -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Всего вложений</h5>
+                        <h2 id="total-attachments">-</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Обработано</h5>
+                        <h2 id="processed-attachments">-</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Отклонено</h5>
+                        <h2 id="rejected-attachments">-</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Отправлено</h5>
+                        <h2 id="sent-attachments">-</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Навигация по разделам -->
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="objects-tab" data-bs-toggle="tab" data-bs-target="#objects" type="button" role="tab">
+                    <i class="bi bi-building"></i> Объекты
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="email-sources-tab" data-bs-toggle="tab" data-bs-target="#email-sources" type="button" role="tab">
+                    <i class="bi bi-envelope"></i> Email источники
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+                    <i class="bi bi-file-earmark-pdf"></i> Документы
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                    <i class="bi bi-graph-up"></i> Отчёты
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="mainTabsContent">
+            <!-- Объекты -->
+            <div class="tab-pane fade show active" id="objects" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Объекты</h4>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#objectModal">
+                        <i class="bi bi-plus"></i> Добавить объект
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="objects-table">
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>№ вычислителя</th>
+                                <th>Адрес</th>
+                                <th>Email</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Email источники -->
+            <div class="tab-pane fade" id="email-sources" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Разрешённые email</h4>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#email-source-modal">
+                        <i class="bi bi-plus"></i> Добавить email
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="email-sources-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Название</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Документы -->
+            <div class="tab-pane fade" id="documents" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h4>Документы</h4>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2">
+                            <select class="form-select" id="status-filter">
+                                <option value="">Все статусы</option>
+                                <option value="new">Новые</option>
+                                <option value="processing">В обработке</option>
+                                <option value="validated">Проверены</option>
+                                <option value="sent">Отправлены</option>
+                                <option value="rejected">Отклонены</option>
+                            </select>
+                            <button class="btn btn-outline-secondary" id="refresh-documents">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="documents-table">
+                        <thead>
+                            <tr>
+                                <th>Файл</th>
+                                <th>№ прибора</th>
+                                <th>Объект</th>
+                                <th>Отправитель</th>
+                                <th>Статус</th>
+                                <th>Причина отказа</th>
+                                <th>Создан</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Отчёты -->
+            <div class="tab-pane fade" id="reports" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Отчёты</h4>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" id="refresh-reports">
+                            <i class="bi bi-arrow-clockwise"></i> Обновить
+                        </button>
+                        <a href="/api/v1/reports/rejections.csv" class="btn btn-success">
+                            <i class="bi bi-download"></i> Экспорт CSV
+                        </a>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="rejections-table">
+                        <thead>
+                            <tr>
+                                <th>Файл</th>
+                                <th>Причина отказа</th>
+                                <th>Объект</th>
+                                <th>Тема письма</th>
+                                <th>Отправитель</th>
+                                <th>Дата</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для объектов -->
+    <div class="modal fade" id="objectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить объект</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="object-form">
+                        <div class="mb-3">
+                            <label class="form-label">Название объекта</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Номер вычислителя</label>
+                            <input type="text" class="form-control" name="calculator_number">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Адрес</label>
+                            <input type="text" class="form-control" name="address">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email для отправки</label>
+                            <input type="text" class="form-control" name="email" placeholder="email1@domain.ru, email2@domain.ru">
+                            <div class="form-text">Можно указать несколько адресов через запятую</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="save-object">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для email источников -->
+    <div class="modal fade" id="email-source-modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить email источник</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="email-source-form">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Название</label>
+                            <input type="text" class="form-control" name="name">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="save-email-source">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
