@@ -22,6 +22,15 @@
 2. Проверить .gitignore
 3. Показать результат пользователю
 
+## При смене ключей/паролей
+
+1. ВСЕГДА искать во ВСЕХ файлах проекта:
+   ```bash
+   grep -r "СТАРЫЙ_КЛЮЧ" /root/project1/ --include="*.py" --include="*.json" --include="*.yml" --include="*.yaml" --include="*.env"
+   ```
+2. Проверить: .env, opencode.json, SKILLS.md, все .py файлы
+3. Показать пользователю список файлов которые нужно обновить
+
 ## Technical Rules
 
 ### Database Operations
