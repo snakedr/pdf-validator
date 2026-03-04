@@ -5,6 +5,22 @@
 1. **Always ask before destructive operations** - Never delete, modify production data, or restart services without explicit user confirmation
 2. **Explain what you're doing** - Briefly describe commands before running them
 3. **Wait for confirmation** - Do not proceed with actions that require user approval
+4. **Never guess** - If something is unclear, ask the user instead of making assumptions
+
+## GitHub / Git Operations - ALWAYS CONFIRM
+
+Перед каждым действием спрашивать подтверждение:
+- Удаление файлов
+- Изменение .gitignore
+- git push / git pull
+- Перезапись истории (git filter-branch, rebase)
+- Изменение secrets/паролей/ключей в любых файлах
+
+## Проверка перед пушем (git push)
+
+1. `git grep -E "(password|passwd|pwd|secret|key|api|sk-)" --include="*.json" --include="*.md"`
+2. Проверить .gitignore
+3. Показать результат пользователю
 
 ## Technical Rules
 
