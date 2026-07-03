@@ -256,11 +256,6 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="ai-tab" data-bs-toggle="pill" data-bs-target="#ai-settings" type="button">
-                            <i class="bi bi-cpu"></i> AI/API
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
                         <button class="nav-link" id="email-out-tab" data-bs-toggle="pill" data-bs-target="#email-out-settings" type="button">
                             <i class="bi bi-envelope"></i> Почта
                         </button>
@@ -315,39 +310,6 @@
                         </div>
                     </div>
 
-                    <!-- AI/API -->
-                    <div class="tab-pane fade" id="ai-settings" role="tabpanel">
-                        <h4>Настройки AI/API</h4>
-                        <div class="card">
-                            <div class="card-body">
-                                <form id="ai-config-form">
-                                    <h5 class="card-title">RouterAI</h5>
-                                    <div class="mb-3">
-                                        <label class="form-label">URL</label>
-                                        <input type="text" class="form-control" id="router-ai-url" placeholder="http://localhost:11434">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">API Key</label>
-                                        <input type="password" class="form-control" id="router-ai-key" placeholder="API Key">
-                                    </div>
-                                    <hr>
-                                    <h5 class="card-title">NeuroApi</h5>
-                                    <div class="mb-3">
-                                        <label class="form-label">URL</label>
-                                        <input type="text" class="form-control" id="neuro-api-url" placeholder="http://neuro.local">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">API Key</label>
-                                        <input type="password" class="form-control" id="neuro-api-key" placeholder="API Key">
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-save"></i> Сохранить
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Email -->
                     <div class="tab-pane fade" id="email-out-settings" role="tabpanel">
                         <h4>Настройки почты</h4>
@@ -395,10 +357,6 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Email</label>
                                             <input type="email" class="form-control" id="email-username" placeholder="user@example.com">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Пароль / App Password</label>
-                                            <input type="password" class="form-control" id="email-password" placeholder="Пароль">
                                         </div>
                                     </div>
                                     <div class="mb-3">

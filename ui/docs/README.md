@@ -66,7 +66,6 @@ class EmailProcessorAdmin {
     async loadReports()
     async loadUsers()
     async loadTrustedEmails()
-    async loadAIConfig()
     async loadEmailConfig()
     
     // Объекты
@@ -91,7 +90,6 @@ class EmailProcessorAdmin {
     async deleteUser(id)
     
     // Настройки
-    async saveAIConfig(data)
     async saveEmailConfig(data)
     
     // UI утилиты
@@ -154,8 +152,6 @@ GET    /settings/trusted-emails
 POST   /settings/trusted-emails
 PUT    /settings/trusted-emails/{id}
 DELETE /settings/trusted-emails/{id}
-GET    /settings/ai-config
-PUT    /settings/ai-config
 GET    /settings/email-config
 PUT    /settings/email-config
 

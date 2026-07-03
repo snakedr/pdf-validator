@@ -5,7 +5,7 @@ from typing import List, Optional
 import os
 from dotenv import load_dotenv
 
-from database import get_db, create_tables
+from database import get_db
 from models import Object, EmailSource, IncomingMessage, Attachment, Report
 from logging_config import setup_logging
 
@@ -36,8 +36,6 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting Email Processor API")
-    # Create tables if they don't exist
-    create_tables()
 
 @app.get("/")
 async def root():

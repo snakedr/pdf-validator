@@ -33,7 +33,8 @@ async def list_email_sources(
     limit: int = Query(100, ge=1, le=1000),
     is_active: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Получить список разрешенных email"""
     query = db.query(EmailSourceModel)
@@ -50,7 +51,7 @@ async def list_email_sources(
     return query.offset(skip).limit(limit).all()
 
 @router.get("/{source_id}", response_model=EmailSource)
-async def get_email_source(source_id: str, db: Session = Depends(get_db)):
+async def get_email_source(source_id: str, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     """Получить источник по ID"""
     source = db.query(EmailSourceModel).filter(EmailSourceModel.id == source_id).first()
     if not source:

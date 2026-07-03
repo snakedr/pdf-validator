@@ -47,8 +47,7 @@ Celery воркеры для фоновых задач.
 - `email_sender.py` - отправка писем
 - `attachment_processor.py` - обработка PDF вложений
 - `pdf_validator.py` - валидация PDF
-- `gpt_validator.py` - AI валидация
-- `scheduler.py` - расписание задач
+- `logging_config.py` - настройка логирования
 
 ### ui/
 Веб-интерфейс (HTML + JavaScript).
@@ -157,8 +156,6 @@ def downgrade() -> None:
 - `POST /api/v1/attachments/{id}/resend` - переотправить (admin)
 
 ### Settings
-- `GET /api/v1/settings/ai-config` - AI настройки (admin)
-- `PUT /api/v1/settings/ai-config` - сохранить AI настройки (admin)
 - `GET /api/v1/settings/email-config` - email настройки (admin)
 - `PUT /api/v1/settings/email-config` - сохранить email настройки (admin)
 

@@ -26,7 +26,7 @@
 - [ ] Добавить модель Settings в `backend/models.py`
 - [ ] Создать `backend/routers/settings.py`
   - GET/POST /api/v1/settings/trusted-emails
-  - GET/PUT /api/v1/settings/ai-config
+  - GET/PUT /api/v1/settings/email-config
 
 ### UI
 - [ ] Добавить раздел "Настройки" в меню

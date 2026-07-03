@@ -62,14 +62,6 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
-# AI/ML Provider Configuration
-AI_API_KEY = os.getenv("AI_API_KEY")
-AI_MODEL = os.getenv("AI_MODEL", "gemini-2.5-flash")
-AI_BASE_URL = os.getenv("AI_BASE_URL")
-
-# Backward compatibility
-OPENAI_API_KEY = AI_API_KEY
-
 # Admin notification email (fallback recipients)
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@example.com")
 NOTIFY_EMAIL = os.getenv("NOTIFY_EMAIL", "admin2@example.com")

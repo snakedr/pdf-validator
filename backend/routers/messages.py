@@ -6,7 +6,8 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel
 from database import get_db
-from models import IncomingMessage as MessageModel, Attachment as AttachmentModel, Object as ObjectModel
+from models import IncomingMessage as MessageModel, Attachment as AttachmentModel, Object as ObjectModel, User as UserModel
+from routers.auth import get_current_user
 from utils import decode_email_header
 
 router = APIRouter()
@@ -72,7 +73,8 @@ async def list_messages(
     source_id: Optional[UUID] = Query(None),
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Получить список входящих писем"""
     query = db.query(MessageModel)
@@ -91,7 +93,7 @@ async def list_messages(
     return query.order_by(MessageModel.received_at.desc()).offset(skip).limit(limit).all()
 
 @router.get("/messages/{message_id}", response_model=Message)
-async def get_message(message_id: UUID, db: Session = Depends(get_db)):
+async def get_message(message_id: UUID, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     """Получить письмо по ID"""
     message = db.query(MessageModel).filter(MessageModel.id == message_id).first()
     if not message:
@@ -112,7 +114,8 @@ async def list_attachments(
     search: Optional[str] = Query(None, description="Search by object name, calculator number, or email"),
     sort_by: Optional[str] = Query(None, description="Sort field: created_at, sent_at, status, filename"),
     sort_order: Optional[str] = Query("desc", regex="^(asc|desc)$"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Получить список вложений с фильтрами"""
     query = db.query(AttachmentModel).outerjoin(ObjectModel)
@@ -191,7 +194,7 @@ async def list_attachments(
     return result
 
 @router.get("/attachments/{attachment_id}", response_model=AttachmentWithObject)
-async def get_attachment(attachment_id: UUID, db: Session = Depends(get_db)):
+async def get_attachment(attachment_id: UUID, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     """Получить детали вложения"""
     attachment = db.query(AttachmentModel).outerjoin(ObjectModel).filter(AttachmentModel.id == attachment_id).first()
     if not attachment:
@@ -235,7 +238,7 @@ async def get_attachment(attachment_id: UUID, db: Session = Depends(get_db)):
     return AttachmentWithObject(**attachment_dict)
 
 @router.get("/attachments/{attachment_id}/details")
-async def get_attachment_details(attachment_id: UUID, db: Session = Depends(get_db)):
+async def get_attachment_details(attachment_id: UUID, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     """Получить полную информацию о вложении включая результат проверок"""
     attachment = db.query(AttachmentModel).outerjoin(MessageModel).outerjoin(ObjectModel).filter(AttachmentModel.id == attachment_id).first()
     if not attachment:

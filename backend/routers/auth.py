@@ -62,6 +62,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = db.query(UserModel).filter(UserModel.username == username).first()
     if user is None:
         raise credentials_exception
+    if not user.is_active:
+        raise credentials_exception
     return user
 
 
@@ -173,11 +175,6 @@ async def get_user(
     current_user: UserModel = Depends(require_admin)
 ):
     """Получить пользователя (только админ)"""
-    user = db.query(UserModel).filter(UserModel.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
-    return user
-
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")

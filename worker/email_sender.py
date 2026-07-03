@@ -286,6 +286,12 @@ def send_pdf_attachment(self, attachment_id: str):
                         break
         if inactive_obj:
             logger.info(f"Attachment {attachment_id} skipped: object {inactive_obj.name} is inactive")
+            attachment.status = 'rejected'
+            attachment.reject_reason = 'object_inactive'
+            db.commit()
+            if attachment.file_path and os.path.exists(attachment.file_path):
+                os.remove(attachment.file_path)
+                logger.info(f"Deleted PDF for inactive object: {attachment.file_path}")
             return {'status': 'skipped', 'reason': 'object_inactive'}
         
         # Safety: if status says approved but reject_reason is set, treat as rejected

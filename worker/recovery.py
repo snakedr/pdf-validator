@@ -1,12 +1,13 @@
 """Recovery task for stuck attachments (lost due to worker crash)"""
 
+import os
 from celery_app import celery_app
 from utils import logger
 from database import get_db
 from models import Attachment, Object
 from datetime import datetime, timezone, timedelta
 
-@celery_app.task(bind=True, name="recovery.stuck_attachments")
+@celery_app.task(bind=True, name="recovery.recover_stuck_attachments")
 def recover_stuck_attachments(self):
     """Find validated/rejected/approved attachments without sent_to_email and re-queue them"""
     logger.info("[RECOVERY] Starting recovery check for stuck attachments")
@@ -20,7 +21,10 @@ def recover_stuck_attachments(self):
         try:
             stuck = db.query(Attachment).filter(
                 Attachment.status.in_(["validated", "rejected", "approved"]),
-                Attachment.created_at < cutoff,
+                (
+                    (Attachment.updated_at < cutoff) |
+                    ((Attachment.updated_at.is_(None)) & (Attachment.created_at < cutoff))
+                ),
                 (Attachment.sent_to_email.is_(None) | (Attachment.sent_to_email == "")),
             ).all()
 
@@ -31,26 +35,27 @@ def recover_stuck_attachments(self):
             logger.info(f"[RECOVERY] Found {len(stuck)} stuck attachments")
 
             for att in stuck:
-                # Skip if linked object is inactive
+                # Skip if linked object is inactive — reject and delete PDF
+                inactive = None
                 if att.calculator_number:
-                    inactive_obj = db.query(Object).filter(
+                    inactive = db.query(Object).filter(
                         Object.calculator_number == att.calculator_number,
                         Object.is_active == False
                     ).first()
-                    if inactive_obj:
-                        logger.info(f"[RECOVERY] Skipping {att.id}: object {inactive_obj.name} is inactive")
-                        recovered["skipped_inactive"] += 1
-                        continue
-
-                if att.object_id:
-                    inactive_obj = db.query(Object).filter(
+                if not inactive and att.object_id:
+                    inactive = db.query(Object).filter(
                         Object.id == att.object_id,
                         Object.is_active == False
                     ).first()
-                    if inactive_obj:
-                        logger.info(f"[RECOVERY] Skipping {att.id}: object {inactive_obj.name} is inactive")
-                        recovered["skipped_inactive"] += 1
-                        continue
+                if inactive:
+                    logger.info(f"[RECOVERY] Rejecting {att.id}: object {inactive.name} is inactive")
+                    att.status = 'rejected'
+                    att.reject_reason = 'object_inactive'
+                    if att.file_path and os.path.exists(att.file_path):
+                        os.remove(att.file_path)
+                        logger.info(f"[RECOVERY] Deleted PDF: {att.file_path}")
+                    recovered["skipped_inactive"] += 1
+                    continue
 
                 if att.status == "approved":
                     from pdf_validator import finalize_validation

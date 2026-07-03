@@ -5,10 +5,9 @@ from typing import List, Optional
 import re
 
 from database import get_db
-from models import Object as ObjectModel
+from models import Object as ObjectModel, User as UserModel
 from schemas import Object, ObjectCreate, ObjectUpdate
 from routers.auth import get_current_user, require_admin
-from models import User as UserModel
 
 router = APIRouter()
 
@@ -44,7 +43,8 @@ async def list_objects(
     period: Optional[str] = Query(None, description="Filter by period (e.g. '23-24')"),
     sort_by: Optional[str] = Query(None, description="Sort field: name, eldis_id, object_date, calculator_number, created_at"),
     sort_order: Optional[str] = Query("asc", regex="^(asc|desc)$"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Получить список объектов"""
     query = db.query(ObjectModel)
@@ -76,7 +76,7 @@ async def list_objects(
     return query.offset(skip).limit(limit).all()
 
 @router.get("/{object_id}", response_model=Object)
-async def get_object(object_id: str, db: Session = Depends(get_db)):
+async def get_object(object_id: str, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     """Получить объект по ID"""
     obj = db.query(ObjectModel).filter(ObjectModel.id == object_id).first()
     if not obj:

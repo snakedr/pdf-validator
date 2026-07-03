@@ -14,8 +14,6 @@ worker/
 ├── email_sender.py       # Отправка писем
 ├── attachment_processor.py # Обработка PDF
 ├── pdf_validator.py      # Валидация PDF
-├── gpt_validator.py       # AI валидация через OpenAI
-├── ai_client.py          # AI клиент
 ├── logging_config.py     # Настройка логирования
 ├── utils.py              # Утилиты
 ├── maintenance.py         # Обслуживание

@@ -379,7 +379,24 @@ def validate_pdf_attachment(self, attachment_id: str):
         if calculator_number:
             attachment.calculator_number = calculator_number
             logger.info(f"Attachment {attachment_id} has calculator number: {calculator_number}")
-            
+
+            # Check for inactive object first
+            inactive_obj = db.query(ObjectModel).filter(
+                ObjectModel.calculator_number == calculator_number,
+                ObjectModel.is_active == False
+            ).first()
+            if inactive_obj:
+                logger.info(f"Attachment {attachment_id}: object {inactive_obj.name} is inactive, rejecting")
+                attachment.status = 'rejected'
+                attachment.reject_reason = 'object_inactive'
+                attachment.object_id = inactive_obj.id
+                attachment.validation_result = validation_result
+                db.commit()
+                if attachment.file_path and os.path.exists(attachment.file_path):
+                    os.remove(attachment.file_path)
+                    logger.info(f"Deleted PDF for inactive object: {attachment.file_path}")
+                return {'status': 'rejected', 'reason': 'object_inactive', 'object_name': inactive_obj.name}
+
             # Find object by calculator number and link it
             obj = db.query(ObjectModel).filter(
                 ObjectModel.calculator_number == calculator_number,
@@ -402,7 +419,6 @@ def validate_pdf_attachment(self, attachment_id: str):
         # Update attachment status based on validation
         dates_ok = validation_result['dates']['dates_ok']
         
-        # Add deterministic keys for GPT pipeline compatibility
         validation_result['deterministic_dates_ok'] = dates_ok
         validation_result['deterministic_tables_ok'] = tables_ok
         
@@ -412,31 +428,29 @@ def validate_pdf_attachment(self, attachment_id: str):
             attachment.reject_reason = None
             attachment.validation_result = validation_result
             logger.info(f"Attachment {attachment_id} approved - all fields filled")
-            
-            db.commit()
-            
-            # Queue final validation decision (deterministic only)
+
+            # Queue BEFORE commit — if commit fails, task retries and finds nothing
             finalize_validation.delay(attachment_id)
+            db.commit()
             logger.info(f"Queued attachment {attachment_id} for final validation")
         else:
-            # Есть пустые ячейки — сразу rejected, GPT не нужен
+            # Есть пустые ячейки — сразу rejected
             attachment.status = 'rejected'
-            
+
             reasons = []
             if not tables_ok:
                 reasons.append(f'empty_cells:{empty_cells}')
             if not dates_ok:
                 reasons.append('dates_invalid')
-            
+
             attachment.reject_reason = ';'.join(reasons)
             attachment.validation_result = validation_result
             logger.warning(f"Attachment {attachment_id} rejected: {reasons}")
-            
-            db.commit()
-            
-            # Queue directly for sending to admin
+
+            # Queue BEFORE commit — if commit fails, task retries and finds nothing
             from email_sender import send_pdf_attachment
             send_pdf_attachment.delay(attachment_id)
+            db.commit()
             logger.info(f"Queued rejected attachment {attachment_id} for sending to admin")
         
         return {
@@ -502,10 +516,10 @@ def finalize_validation(attachment_id: str):
                 else:
                     attachment.reject_reason = 'validation'
 
-            db.commit()
-
+            # Queue BEFORE commit — if commit fails, task retries and finds nothing
             from email_sender import send_pdf_attachment
             send_pdf_attachment.delay(attachment_id)
+            db.commit()
 
             logger.info(f"Validation finalized for attachment {attachment_id}: {attachment.status}")
 

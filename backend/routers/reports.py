@@ -10,7 +10,8 @@ import csv
 import io
 
 from database import get_db
-from models import Attachment as AttachmentModel, Object as ObjectModel, IncomingMessage as MessageModel
+from models import Attachment as AttachmentModel, Object as ObjectModel, IncomingMessage as MessageModel, User as UserModel
+from routers.auth import get_current_user
 from utils import decode_email_header
 from sqlalchemy import func
 
@@ -40,7 +41,8 @@ async def get_rejection_report(
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
     reject_reason: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Получить отчет об отклоненных вложениях (JSON)"""
     # Include hard rejections by status and soft rejections where status later changes,
@@ -81,7 +83,8 @@ async def get_rejection_report_csv(
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
     reject_reason: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Экспорт отчета об отклоненных вложениях в CSV"""
     query = db.query(AttachmentModel).outerjoin(ObjectModel).outerjoin(MessageModel).filter(
@@ -134,7 +137,8 @@ async def get_rejection_report_csv(
 async def get_report_summary(
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Получить сводный отчет"""
     query = db.query(AttachmentModel)
@@ -182,7 +186,8 @@ async def get_report_summary(
 async def get_processing_stats(
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
 ):
     """Получить статистику обработки по дням"""
     from sqlalchemy import cast, Date

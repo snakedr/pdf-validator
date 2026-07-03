@@ -65,13 +65,6 @@ class SettingResponse(BaseModel):
         from_attributes = True
 
 
-class AIConfig(BaseModel):
-    router_ai_url: Optional[str] = None
-    router_ai_key: Optional[str] = None
-    neuro_api_url: Optional[str] = None
-    neuro_api_key: Optional[str] = None
-
-
 class EmailConfig(BaseModel):
     imap_server: Optional[str] = None
     imap_port: Optional[int] = None
@@ -80,7 +73,6 @@ class EmailConfig(BaseModel):
     smtp_port: Optional[int] = None
     smtp_ssl: Optional[bool] = None
     email_username: Optional[str] = None
-    email_password: Optional[str] = None
     email_from_name: Optional[str] = None
 
 
@@ -88,7 +80,7 @@ class EmailConfig(BaseModel):
 EMAIL_CONFIG_KEYS = [
     'imap_server', 'imap_port', 'imap_ssl',
     'smtp_server', 'smtp_port', 'smtp_ssl',
-    'email_username', 'email_password', 'email_from_name'
+    'email_username', 'email_from_name'
 ]
 
 
@@ -170,52 +162,6 @@ async def list_settings(
     return db.query(SettingModel).all()
 
 
-@router.get("/ai-config", response_model=AIConfig)
-async def get_ai_config(
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(require_admin)
-):
-    config = {}
-    keys = ["router_ai_url", "router_ai_key", "neuro_api_url", "neuro_api_key"]
-    for key in keys:
-        setting = db.query(SettingModel).filter(SettingModel.key == key).first()
-        if setting:
-            config[key] = setting.value
-    return config
-
-
-@router.put("/ai-config", response_model=AIConfig)
-async def update_ai_config(
-    ai_config: AIConfig,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(require_admin)
-):
-    config = {}
-    keys = {
-        "router_ai_url": ai_config.router_ai_url,
-        "router_ai_key": ai_config.router_ai_key,
-        "neuro_api_url": ai_config.neuro_api_url,
-        "neuro_api_key": ai_config.neuro_api_key,
-    }
-    
-    for key, value in keys.items():
-        setting = db.query(SettingModel).filter(SettingModel.key == key).first()
-        if setting:
-            setting.value = value
-        else:
-            setting = SettingModel(key=key, value=value)
-            db.add(setting)
-    
-    db.commit()
-    
-    for key in keys:
-        setting = db.query(SettingModel).filter(SettingModel.key == key).first()
-        if setting:
-            config[key] = setting.value
-    
-    return config
-
-
 @router.get("/settings/{setting_key}", response_model=SettingResponse)
 async def get_setting(
     setting_key: str,
@@ -283,7 +229,6 @@ async def update_email_config(
         "smtp_port": str(email_config.smtp_port) if email_config.smtp_port else None,
         "smtp_ssl": str(email_config.smtp_ssl).lower() if email_config.smtp_ssl is not None else None,
         "email_username": email_config.email_username,
-        "email_password": email_config.email_password,
         "email_from_name": email_config.email_from_name,
     }
     

@@ -64,8 +64,6 @@ backend/
 - `POST /trusted-emails` - добавить (admin)
 - `PUT /trusted-emails/{id}` - обновить (admin)
 - `DELETE /trusted-emails/{id}` - удалить (admin)
-- `GET /ai-config` - AI настройки (admin)
-- `PUT /ai-config` - сохранить AI настройки (admin)
 - `GET /email-config` - email настройки (admin)
 - `PUT /email-config` - сохранить email настройки (admin)
 
@@ -123,10 +121,6 @@ backend/
 | updated_at | DateTime | Обновлён |
 
 **Известные ключи настроек:**
-- `router_ai_url` - URL RouterAI
-- `router_ai_key` - API ключ RouterAI
-- `neuro_api_url` - URL NeuroApi
-- `neuro_api_key` - API ключ NeuroApi
 - `imap_server` - IMAP сервер
 - `imap_port` - IMAP порт
 - `imap_ssl` - IMAP SSL (true/false)

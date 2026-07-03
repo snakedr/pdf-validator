@@ -6,6 +6,15 @@ class EmailProcessorAdmin {
         this.init();
     }
 
+    escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     async init() {
         await this.checkConnection();
         await this.checkAuth();
@@ -19,7 +28,6 @@ class EmailProcessorAdmin {
             await this.loadReports();
             await this.loadUsers();
             await this.loadTrustedEmails();
-            await this.loadAIConfig();
             await this.loadEmailConfig();
             
             setInterval(() => this.loadStatistics(), 30000);
@@ -178,10 +186,12 @@ class EmailProcessorAdmin {
     showAlert(message, type = 'info') {
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        alertDiv.textContent = message;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-close';
+        btn.setAttribute('data-bs-dismiss', 'alert');
+        alertDiv.appendChild(btn);
         document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
         
         setTimeout(() => {
@@ -223,12 +233,12 @@ class EmailProcessorAdmin {
             objects.forEach(obj => {
                 const row = tbody.insertRow();
                 row.innerHTML = `
-                    <td>${obj.eldis_id || '-'}</td>
-                    <td>${obj.object_date || '-'}</td>
-                    <td>${obj.name}</td>
-                    <td>${obj.calculator_number || '-'}</td>
-                    <td>${obj.address || '-'}</td>
-                    <td>${obj.email || '-'}</td>
+                    <td>${this.escapeHtml(obj.eldis_id) || '-'}</td>
+                    <td>${this.escapeHtml(obj.object_date) || '-'}</td>
+                    <td>${this.escapeHtml(obj.name)}</td>
+                    <td>${this.escapeHtml(obj.calculator_number) || '-'}</td>
+                    <td>${this.escapeHtml(obj.address) || '-'}</td>
+                    <td>${this.escapeHtml(obj.email) || '-'}</td>
                     <td>
                         <button class="btn btn-sm btn-link" onclick="admin.toggleObjectStatus('${obj.id}', ${obj.is_active})" title="${obj.is_active ? 'Деактивировать' : 'Активировать'}">
                             <span class="badge bg-${obj.is_active ? 'success' : 'secondary'}">${obj.is_active ? 'Активен' : 'Неактивен'}</span>
@@ -258,8 +268,8 @@ class EmailProcessorAdmin {
             sources.forEach(source => {
                 const row = tbody.insertRow();
                 row.innerHTML = `
-                    <td>${source.email}</td>
-                    <td>${source.name || '-'}</td>
+                    <td>${this.escapeHtml(source.email)}</td>
+                    <td>${this.escapeHtml(source.name) || '-'}</td>
                     <td><span class="badge bg-${source.is_active ? 'success' : 'secondary'}">${source.is_active ? 'Активен' : 'Неактивен'}</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary" onclick="admin.editEmailSource('${source.id}')">
@@ -307,12 +317,12 @@ class EmailProcessorAdmin {
                 const statusBadge = this.getStatusBadge(att.status);
                 
                 row.innerHTML = `
-                    <td>${att.sent_filename || att.filename}</td>
-                    <td>${att.calculator_number || '-'}</td>
-                    <td>${att.object ? att.object.name : '-'}</td>
-                    <td>${att.message ? att.message.from_email : '-'}</td>
+                    <td>${this.escapeHtml(att.sent_filename || att.filename)}</td>
+                    <td>${this.escapeHtml(att.calculator_number) || '-'}</td>
+                    <td>${att.object ? this.escapeHtml(att.object.name) : '-'}</td>
+                    <td>${att.message ? this.escapeHtml(att.message.from_email) : '-'}</td>
                     <td>${statusBadge}</td>
-                    <td>${att.reject_reason || '-'}</td>
+                    <td>${this.escapeHtml(att.reject_reason) || '-'}</td>
                     <td>${new Date(att.created_at + 'Z').toLocaleString('ru-RU', {timeZone: 'Europe/Moscow'})}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-info" onclick="admin.showAttachmentDetails('${att.id}')">
@@ -343,11 +353,11 @@ class EmailProcessorAdmin {
             rejections.forEach(rej => {
                 const row = tbody.insertRow();
                 row.innerHTML = `
-                    <td>${rej.filename}</td>
-                    <td><span class="badge bg-danger">${rej.reject_reason}</span></td>
-                    <td>${rej.object_name || '-'}</td>
-                    <td>${rej.message_subject || '-'}</td>
-                    <td>${rej.from_email || '-'}</td>
+                    <td>${this.escapeHtml(rej.filename)}</td>
+                    <td><span class="badge bg-danger">${this.escapeHtml(rej.reject_reason)}</span></td>
+                    <td>${this.escapeHtml(rej.object_name) || '-'}</td>
+                    <td>${this.escapeHtml(rej.message_subject) || '-'}</td>
+                    <td>${this.escapeHtml(rej.from_email) || '-'}</td>
                     <td>${new Date(rej.created_at + 'Z').toLocaleString('ru-RU', {timeZone: 'Europe/Moscow'})}</td>
                 `;
             });
@@ -588,28 +598,6 @@ class EmailProcessorAdmin {
             }
         });
 
-        // Сохранение AI конфига
-        document.getElementById('ai-config-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const data = {
-                router_ai_url: document.getElementById('router-ai-url').value || null,
-                router_ai_key: document.getElementById('router-ai-key').value || null,
-                neuro_api_url: document.getElementById('neuro-api-url').value || null,
-                neuro_api_key: document.getElementById('neuro-api-key').value || null
-            };
-            
-            try {
-                await this.apiCall('/settings/ai-config', {
-                    method: 'PUT',
-                    body: JSON.stringify(data)
-                });
-                this.showAlert('Настройки сохранены', 'success');
-            } catch (error) {
-                this.showAlert(error.message, 'danger');
-            }
-        });
-
         // Сохранение email конфига
         document.getElementById('email-config-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -622,7 +610,6 @@ class EmailProcessorAdmin {
                 smtp_port: parseInt(document.getElementById('smtp-port').value) || null,
                 smtp_ssl: document.getElementById('smtp-ssl').checked,
                 email_username: document.getElementById('email-username').value || null,
-                email_password: document.getElementById('email-password').value || null,
                 email_from_name: document.getElementById('email-from-name').value || null
             };
             
@@ -770,27 +757,27 @@ class EmailProcessorAdmin {
             
             let html = `
                 <h6>Детали вложения</h6>
-                <p><strong>Файл:</strong> ${details.filename}</p>
+                <p><strong>Файл:</strong> ${this.escapeHtml(details.filename)}</p>
                 <p><strong>Размер:</strong> ${details.file_size ? `${details.file_size} байт` : '-'}</p>
                 <p><strong>Статус:</strong> ${this.getStatusBadge(details.status)}</p>
             `;
             
             if (details.reject_reason) {
-                html += `<p><strong>Причина отказа:</strong> ${details.reject_reason}</p>`;
+                html += `<p><strong>Причина отказа:</strong> ${this.escapeHtml(details.reject_reason)}</p>`;
             }
             
             if (details.message) {
                 html += `
                     <h6>Сообщение</h6>
-                    <p><strong>От:</strong> ${details.message.from_email}</p>
-                    <p><strong>Тема:</strong> ${details.message.subject || '-'}</p>
+                    <p><strong>От:</strong> ${this.escapeHtml(details.message.from_email)}</p>
+                    <p><strong>Тема:</strong> ${this.escapeHtml(details.message.subject) || '-'}</p>
                 `;
             }
             
             if (details.validation_result) {
                 html += `
                     <h6>Результат проверки</h6>
-                    <pre class="bg-light p-2">${JSON.stringify(details.validation_result, null, 2)}</pre>
+                    <pre class="bg-light p-2">${this.escapeHtml(JSON.stringify(details.validation_result, null, 2))}</pre>
                 `;
             }
             
@@ -836,8 +823,8 @@ class EmailProcessorAdmin {
                 users.forEach(user => {
                 const row = tbody.insertRow();
                 row.innerHTML = `
-                    <td>${user.username}</td>
-                    <td>${user.email || '-'}</td>
+                    <td>${this.escapeHtml(user.username)}</td>
+                    <td>${this.escapeHtml(user.email) || '-'}</td>
                     <td><span class="badge bg-${user.role === 'admin' ? 'danger' : 'primary'}">${user.role === 'admin' ? 'Админ' : 'Оператор'}</span></td>
                     <td><span class="badge bg-${user.is_active ? 'success' : 'secondary'}">${user.is_active ? 'Активен' : 'Неактивен'}</span></td>
                     <td>
@@ -901,8 +888,8 @@ class EmailProcessorAdmin {
             emails.forEach(email => {
                 const row = tbody.insertRow();
                 row.innerHTML = `
-                    <td>${email.email}</td>
-                    <td>${email.description || '-'}</td>
+                    <td>${this.escapeHtml(email.email)}</td>
+                    <td>${this.escapeHtml(email.description) || '-'}</td>
                     <td><span class="badge bg-${email.is_active ? 'success' : 'secondary'}">${email.is_active ? 'Активен' : 'Неактивен'}</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-danger" onclick="admin.deleteTrustedEmail('${email.id}')">
@@ -928,18 +915,6 @@ class EmailProcessorAdmin {
         }
     }
 
-    async loadAIConfig() {
-        try {
-            const config = await this.apiCall('/settings/ai-config');
-            document.getElementById('router-ai-url').value = config.router_ai_url || '';
-            document.getElementById('router-ai-key').value = config.router_ai_key || '';
-            document.getElementById('neuro-api-url').value = config.neuro_api_url || '';
-            document.getElementById('neuro-api-key').value = config.neuro_api_key || '';
-        } catch (error) {
-            console.error('Failed to load AI config:', error);
-        }
-    }
-
     async loadEmailConfig() {
         try {
             const config = await this.apiCall('/settings/email-config');
@@ -950,7 +925,6 @@ class EmailProcessorAdmin {
             document.getElementById('smtp-port').value = config.smtp_port || '';
             document.getElementById('smtp-ssl').checked = config.smtp_ssl !== false;
             document.getElementById('email-username').value = config.email_username || '';
-            document.getElementById('email-password').value = '';
             document.getElementById('email-from-name').value = config.email_from_name || '';
         } catch (error) {
             console.error('Failed to load email config:', error);
